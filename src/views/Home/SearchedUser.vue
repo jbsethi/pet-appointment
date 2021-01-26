@@ -5,8 +5,8 @@
         <div class="avatar h-12 w-12 bg-black rounded-full"></div>
       </div>
       <div>
-        <p>Jahanzeb Ahmed</p>
-        <small>last: shopped toys</small>
+        <p>{{ user.name }}</p>
+        <small v-if="user.activity">last: {{ user.activity }}</small>
       </div>
     </div>
     <div>
@@ -17,6 +17,11 @@
 
 <script>
 export default {
-  name: 'SearchedUser'
+  name: 'SearchedUser',
+  props: {
+    user: {
+      type: Object
+    }
+  }
 }
 </script>
