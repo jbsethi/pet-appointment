@@ -25,8 +25,9 @@
         :selectedPetDetails="selectedPetDetails"
         @click:addPet="toggleAddNewUserPet"
         @click:selectPet="selectPet"
-        @click:close="activeUserId = null"
         @click:addPetRecord="addPetRecord"
+        @click:addVisit="addNewVisit"
+        @click:close="closeUserDetails"
       />
     </section>
     <Modal :show="addNewUserForm" >
@@ -75,19 +76,19 @@
           <div class="pl-1">
             <div class="mt-2">
               <label class="">
-                <input v-model="appointmentDetails.type" type="radio" name="visit_type" value="grooming" />
+                <input v-model="appointmentDetails.tape" type="checkbox" id="grooming" value="grooming" />
                 <span class="ml-3 text-base" >Grooming</span>
               </label>
             </div>
             <div class="mt-1">
               <label class="">
-                <input v-model="appointmentDetails.type" type="radio" name="visit_type" value="shopping" />
+                <input v-model="appointmentDetails.tape" type="checkbox" id="shopping" value="shopping" />
                 <span class="ml-3 text-base" >Shopping</span>
               </label>
             </div>
             <div class="mt-1">
               <label class="">
-                <input v-model="appointmentDetails.type" type="radio" name="visit_type" value="doctor" />
+                <input v-model="appointmentDetails.tape" type="checkbox" id="doctor" value="doctor" />
                 <span class="ml-3 text-base" >Doctor</span>
               </label>
             </div>
@@ -241,6 +242,7 @@ export default {
       ],
 
       appointmentDetails: {
+        tape: [],
         type: 'doctor'
       },
 
@@ -350,6 +352,11 @@ export default {
     UserDetails,
   },
   methods: {
+    addNewVisit () {
+      this.createAppointmentUserId = this.activeUserId
+      this.toggleCreateNewAppointment(true)
+    },
+
     selectPet (petId) {
       this.selectedPetId = petId
     },
@@ -410,8 +417,8 @@ export default {
       this.users.unshift({ ...this.user })
       this.toggleAddNewUser(false)
 
-      this.createAppointmentUserId = this.user.id
-      this.toggleCreateNewAppointment(true)
+      this.activeUserId = this.user.id
+      // this.toggleCreateNewAppointment(true)
 
       this.resetUserData()
     },
@@ -440,6 +447,11 @@ export default {
     addPetRecord (petId) {
       this.petRecordId = petId
       this.toggleCreatePetRecordModal(true)
+    },
+
+    closeUserDetails () {
+      this.activeUserId = null
+      this.selectedPetId = null
     },
 
     resetPetData () {
