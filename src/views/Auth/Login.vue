@@ -53,7 +53,7 @@
               <input
                 v-model="username"
                 class="w-full text-lg py-2 border-b border-gray-300 focus:outline-none focus:border-indigo-500"
-                type=""
+                type="text"
                 placeholder="Enter your Username"
               />
             </div>
@@ -66,7 +66,7 @@
               <input
                 v-model="password"
                 class="w-full text-lg py-2 border-b border-gray-300 focus:outline-none focus:border-indigo-500"
-                type=""
+                type="password"
                 placeholder="Enter your password"
               />
             </div>
