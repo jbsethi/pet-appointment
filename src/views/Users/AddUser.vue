@@ -207,8 +207,7 @@ export default {
         password: "",
         email: "",
         role: "",
-        active: true,
-        labId: null,
+        active: true
       },
     };
   },

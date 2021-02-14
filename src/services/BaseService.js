@@ -3,7 +3,7 @@ import { API_URL } from '../.env.js'
 
 export const HTTP = axios.create({
   baseURL: API_URL,
-  timeout: 7000,
+  timeout: 14000,
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json'

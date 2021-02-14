@@ -10,14 +10,20 @@
       </button>
     </div>
     <section
+      v-if="selectedPetDetails.history.length > 0"
       class="p-3 flex flex-col gap-y-2 history-container"
     >
       <OrderItem
-        v-for="history in userHistory"
+        v-for="history in selectedPetDetails.history"
         :key="history.id"
         :history="history"
         class="w-full border border-indigo-100 bg-indigo-100 rounded p-2"
       ></OrderItem>
+    </section>
+    <section v-else>
+      <p class="py-5 text-center text-gray-400">
+        <em>No History Found !</em>
+      </p>
     </section>
   </section>
 </template>
@@ -26,33 +32,44 @@
 import OrderItem from './OrderItem.vue'
 export default {
   name: "PetUserHistory",
-  data () {
-    return {
-      userHistory: [
-        {
-          id: '1',
-          type: 'shopping',
-          date: '20-1-2021'
-        },
-        {
-          id: '2',
-          type: 'doctor',
-          petNames: ['Tom'],
-          date: '20-1-2021'
-        },
-        {
-          id: '3',
-          type: 'grooming',
-          petNames: ['Tom'],
-          date: '20-1-2021'
-        }
-      ]
+  props: {
+    selectedPetDetails: {
+      type: Object,
+      default: () => {}
     }
   },
+  // data () {
+  //   return {
+  //     userHistory: [
+  //       {
+  //         id: '1',
+  //         type: 'shopping',
+  //         date: '20-1-2021'
+  //       },
+  //       {
+  //         id: '2',
+  //         type: 'doctor',
+  //         petNames: ['Tom'],
+  //         date: '20-1-2021'
+  //       },
+  //       {
+  //         id: '3',
+  //         type: 'grooming',
+  //         petNames: ['Tom'],
+  //         date: '20-1-2021'
+  //       }
+  //     ]
+  //   }
+  // },
   components: {
     OrderItem
   }
 };
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.history-container {
+  max-height: 60vh;
+  overflow: auto;
+}
+</style>

@@ -6,14 +6,19 @@
       </svg>
     </div>
     <div class="w-full rounded-md">
-      <input type="text" class="py-4 w-full rounded-md" />
+      <input v-model="val" @keyup.enter="$emit('enter:searchUser', val)" type="text" class="py-4 w-full rounded-md" />
     </div>
   </section>
 </template>
 
 <script>
 export default {
-  name: 'SearchBar'
+  name: 'SearchBar',
+  data () {
+    return {
+      val: ''
+    }
+  }
 }
 </script>
 

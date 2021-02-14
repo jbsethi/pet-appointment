@@ -2,17 +2,27 @@
   <article
     class="w-full border border-indigo-100 bg-indigo-100 rounded p-2"
   >
-    <p class="text-sm">Visit type: {{ history.type }}</p>
-    <p v-if="history.type != 'shopping'" class="text-sm">Pet: {{ history.petNames.length == 1 ? history.petNames[0] : history.petNames.join(', ') }}</p>
-    <small class="text-xs">{{ history.date }}</small>
+    <p class="text-sm">Visit type: {{ getServiceName(history.serviceId) }}</p>
+    <p class="text-sm">Price: {{ history.price }}</p>
+    <small class="text-xs">{{ history.createdAt }}</small>
   </article>
 </template>
 
 <script>
+const serviceMap = {
+  1: 'Shopping',
+  2: 'Grooming',
+  3: 'Doctor'
+}
 export default {
   props: {
     history: {
       type: Object
+    }
+  },
+  methods: {
+    getServiceName (id) {
+      return serviceMap[id]
     }
   }
 }

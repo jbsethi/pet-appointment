@@ -10,7 +10,7 @@
       </div>
     </div>
     <div>
-      2 days ago
+      {{ getDate(user.createdAt) }}
     </div>
   </section>
 </template>
@@ -21,6 +21,12 @@ export default {
   props: {
     user: {
       type: Object
+    }
+  },
+  methods: {
+    getDate (date) {
+      const fullDate = new Date()
+      return `${fullDate.getDate()}/${+fullDate.getMonth() + 1}/${fullDate.getFullYear()}`
     }
   }
 }

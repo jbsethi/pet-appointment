@@ -3,8 +3,9 @@
   <section class="flex justify-around pt-14 bg-gray-200 min-h-screen">
     <section :class="activeUserId ? 'w-4/12' : 'w-11/12'">
       <TopBar @click:addNewUser="toggleAddNewUser()"/>
-      <SearchBar />
+      <SearchBar @enter:searchUser="searchUser"/>
       <div
+        v-if="users.length > 0"
         class="searched-users mt-5"
         :class="activeUserId ? 'flex flex-col gap-3' : 'grid grid-cols-3 gap-4'"
       >
@@ -14,16 +15,18 @@
           :key="user.id"
           :user="user"
           :class="activeUserId ? '' : 'user-fit-content'"
-          @click="activeUserId = user.id"
+          @click="selectActiveUser(user)"
         />
+      </div>
+      <div v-else class="searched-users mt-5">
+        <p class="text-center mt-5 py-3 text-2xl text-gray-400"><em>No User Exist !</em></p>
       </div>
     </section>
     <section v-if="activeUserId" class="w-7/12">
       <UserDetails
-        :pets="pets"
+        :user="activeUser"
         :selectedPetId="selectedPetId"
         :selectedPetDetails="selectedPetDetails"
-        @click:addPet="toggleAddNewUserPet"
         @click:selectPet="selectPet"
         @click:addPetRecord="addPetRecord"
         @click:addVisit="addNewVisit"
@@ -49,7 +52,7 @@
         </div>
         <div class="mt-3">
           <label class="text-sm font-semibold">Phone No</label>
-          <input v-model="user.phone" class="w-full border border-black rounded py-2 px-3 mt-1 text-grey-700 text-base focus:outline-none focus:border-indigo-900" type="text" placeholder="Phone"/>
+          <input v-model="user.contact" class="w-full border border-black rounded py-2 px-3 mt-1 text-grey-700 text-base focus:outline-none focus:border-indigo-900" type="text" placeholder="Phone"/>
         </div>
         <div class="mt-12 flex justify-between">
           <div>
@@ -76,29 +79,44 @@
           <div class="pl-1">
             <div class="mt-2">
               <label class="">
-                <input v-model="appointmentDetails.tape" type="checkbox" id="grooming" value="grooming" />
+                <input v-model="appointmentDetails.type" type="radio" name="type" id="grooming" value="2" />
                 <span class="ml-3 text-base" >Grooming</span>
               </label>
             </div>
             <div class="mt-1">
               <label class="">
-                <input v-model="appointmentDetails.tape" type="checkbox" id="shopping" value="shopping" />
+                <input v-model="appointmentDetails.type" type="radio" name="type" id="shopping" value="1" />
                 <span class="ml-3 text-base" >Shopping</span>
               </label>
             </div>
             <div class="mt-1">
               <label class="">
-                <input v-model="appointmentDetails.tape" type="checkbox" id="doctor" value="doctor" />
+                <input v-model="appointmentDetails.type" type="radio" name="type" id="doctor" value="3" />
                 <span class="ml-3 text-base" >Doctor</span>
               </label>
             </div>
           </div>
         </div>
         <div class="px-3 mt-8">
-          <div v-if="appointmentDetails.type == 'doctor'">Doctor</div>
+          <div v-if="appointmentDetails.type == '3'">
+            <div class="pb-2 border-b border-black mb-5 flex justify-between items-center">
+              <p class="">Description</p>
+            </div>
+            <div class="w-full mb-3 ">
+              <label>Follow Up</label>
+              <select class="mt-2 rounded bg-white py-2 px-2 w-full border border-black focus:outline-none" v-model="doctorFollowUp" >
+                <option :value="true">Yes</option>
+                <option :value="false">No</option>
+              </select>
+            </div>
+            <div class="w-full">
+              <label>Fees</label>
+              <input class="mt-2 rounded py-1 px-2 w-full border border-black focus:outline-none" :disabled="doctorFollowUp" type="text" v-model="doctorFees" />
+            </div>
+          </div>
           <div v-else>
             <div class="pb-2 border-b border-black mb-5 flex justify-between items-center">
-              <p class="">{{ appointmentDetails.type[0].toUpperCase() + appointmentDetails.type.slice(1) }} Description</p>
+              <p class="">Description</p>
               <div>
                 <button @click="addDescriptionInvoiceItem" type="button" class="px-2 py-1 bg-indigo-500 text-white rounded text-sm">&#10010; Add Row</button>
               </div>
@@ -127,7 +145,7 @@
                     </p>
                   </div>
                   <div class="w-4/12">
-                    <input class="w-full border border-black border-t-0 p-1 pl-3" type="price" placeholder="0.00"/>
+                    <input class="w-full border border-black border-t-0 p-1 pl-3" type="price" placeholder="0.00" :value="totalPrice" />
                   </div>
                   <div class="w-1/12"></div>
                 </li>
@@ -142,38 +160,6 @@
           </div>
           <div>
             <button @click="closeCreateNewAppointment(false)" type="button" class="ml-1 px-5 py-1 bg-red-500 text-white rounded shadow">Close</button>
-          </div>
-        </div>
-      </form>
-    </Modal>
-    <Modal :show="createPetUserModal" >
-     <div slot="header" class="px-5 py-3 border-b border-black">
-        <p class="text-xl">Add pet for user</p>
-      </div>
-      <form class="px-5 py-3">
-        <div>
-          <label class="text-sm font-semibold">Pet Name</label>
-          <input v-model="pet.name" class="w-full border border-black rounded py-2 px-3 mt-1 text-grey-700 text-base focus:outline-none focus:border-indigo-900" type="text" placeholder="Name" />
-        </div>
-        <div class="mt-3">
-          <label class="text-sm font-semibold">Age</label>
-          <input v-model="pet.age" class="w-full border border-black rounded py-2 px-3 mt-1 text-grey-700 text-base focus:outline-none focus:border-indigo-900" type="number" placeholder="Age" />
-        </div>
-        <div class="mt-3">
-          <label class="text-sm font-semibold">Color</label>
-          <input v-model="pet.color" class="w-full border border-black rounded py-2 px-3 mt-1 text-grey-700 text-base focus:outline-none focus:border-indigo-900" type="text" placeholder="Color" />
-        </div>
-        <div class="mt-3">
-          <label class="text-sm font-semibold">Pet</label>
-          <input v-model="pet.type" class="w-full border border-black rounded py-2 px-3 mt-1 text-grey-700 text-base focus:outline-none focus:border-indigo-900" type="text" placeholder="Cat, Dog etc"/>
-        </div>
-        <div class="mt-12 flex justify-between">
-          <div>
-            <button @click="confirmCreateUserPet()" type="button" class="px-3 py-1 bg-indigo-500 text-white rounded shadow">Confirm</button>
-            <button @click="resetUserPetData()" type="button" class="ml-1 px-5 py-1 bg-gray-500 text-white rounded shadow">Clear</button>
-          </div>
-          <div>
-            <button @click="cancelCreateUserPet(false)" type="button" class="ml-1 px-5 py-1 bg-red-500 text-white rounded shadow">Close</button>
           </div>
         </div>
       </form>
@@ -211,6 +197,8 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex'
+
 import DashboardLayout from '../../layouts/DashbordLayout.vue'
 import Modal from '../../components/Modal.vue'
 
@@ -228,7 +216,7 @@ export default {
         emiratesId: '',
         name: '',
         email: '',
-        phone: ''
+        contact: ''
       },
 
       createAppointmentModal: false,
@@ -241,69 +229,17 @@ export default {
         }
       ],
 
+      doctorFollowUp: false,
+      doctorFees: null,
+
       appointmentDetails: {
-        tape: [],
-        type: 'doctor'
+        type: 3
       },
 
-      users: [  // init users
-        {
-          id: '1',
-          emiratesId: '123456789',
-          name: 'Wasiq Naqi',
-          email: 'wasiqnaqi@gmail.com',
-          phone: '03129632584'
-        },
-        {
-          id: '2',
-          emiratesId: '456789123',
-          name: 'Jahanzeb Sethi',
-          email: 'jahanzebsethi@gmail.com',
-          phone: '03129741852'
-        },
-        {
-          id: '3',
-          emiratesId: '123456789',
-          name: 'Khan sahab',
-          email: 'khansahab@gmail.com',
-          phone: '03129632584'
-        },
-        {
-          id: '4',
-          emiratesId: '456789123',
-          name: 'Afran Khan',
-          email: 'Afran Khan@gmail.com',
-          phone: '03129741852'
-        }
-      ],
+      users: [],
 
       activeUserId: null,
-      createPetUserModal: false,
-
-      pet: {
-        id: '',
-        name: '',
-        color: '',
-        age: '',
-        type: ''
-      },
-
-      pets: [
-        {
-          id: '1',
-          name: 'Tom',
-          color: 'Black',
-          age: '2',
-          type: 'Dog'
-        },
-        {
-          id: '2',
-          name: 'Edgar',
-          color: 'Lightbrown',
-          age: '1',
-          type: 'Dog'
-        }
-      ],
+      activeUser: {},
 
       selectedPetId: null,
       selectedPetDetails: {
@@ -314,22 +250,7 @@ export default {
           age: '2',
           type: 'Dog'
         },
-        history: [
-          {
-            id: 2,
-            statement: 'follow up',
-            treatment: '25mg Tablet',
-            description: 'Got better',
-            date: '23-1-2021'
-          },
-          {
-            id: 1,
-            statement: 'High fever',
-            treatment: '25mg Tablet',
-            description: 'Complete rest for a week',
-            date: '23-1-2021'
-          }
-        ]
+        history: []
       },
 
       createPetRecordModal: false,
@@ -343,6 +264,14 @@ export default {
       }
     }
   },
+  computed: {
+    totalPrice () {
+      return this.descriptionInvoiceItems.reduce((acc, item) => {
+        acc += +item.price
+        return acc
+      }, 0)
+    }
+  },
   components: {
     DashboardLayout,
     Modal,
@@ -352,6 +281,20 @@ export default {
     UserDetails,
   },
   methods: {
+    searchUser (query) {
+      const data = {
+        query
+      }
+
+      this.searchPatientUser(data)
+        .then(resp => {
+          this.users = resp.data.rows
+        })
+        .catch(err => {
+          console.log(err)
+        })
+    },
+
     addNewVisit () {
       this.createAppointmentUserId = this.activeUserId
       this.toggleCreateNewAppointment(true)
@@ -361,28 +304,38 @@ export default {
       this.selectedPetId = petId
     },
 
+    selectActiveUser (user) {
+      this.activeUserId = user.id
+      this.activeUser = user
+
+      const query = {
+        search: user.emiratesId
+      }
+
+      this.loadUserHistory(query)
+        .then(resp => {
+          this.selectedPetDetails.history = resp.data.rows
+        })
+        .catch(err => {
+          console.log(err)
+        })
+    },
+
     toggleAddNewUser (status) {
       this.addNewUserForm = status == undefined ? !this.addNewUserForm : status
     },
 
     toggleCreateNewAppointment (status) {
+      console.log('coming here')
       if (this.createAppointmentUserId) {
+        console.log('coming in here', status)
         this.createAppointmentModal = status == undefined ? !this.createAppointmentModal : status
       }
-    },
-
-    toggleAddNewUserPet (status) {
-      this.createPetUserModal = status == undefined ? !this.createPetUserModal : status
     },
 
     closeCreateNewAppointment (status) {
       this.toggleCreateNewAppointment(status)
       this.createAppointmentUserId = ''
-    },
-
-    cancelCreateUserPet () {
-      this.toggleAddNewUserPet(false)
-      this.resetUserPetData()
     },
 
     addDescriptionInvoiceItem () {
@@ -398,36 +351,66 @@ export default {
     },
 
     addAppointmentRecord () {
-      const data = {
-        userId: this.createAppointmentUserId,
-        visitType: this.appointmentDetails.type,
-        items: this.descriptionInvoiceItems.map(item => {
-          return {...item}
-        })
+      const record = {
+        patientId: this.createAppointmentUserId,
+        price: this.appointmentDetails.type == 3 ? (this.doctorFees != null ? (this.doctorFollowUp ? 0 : this.doctorFees) : 0) : this.totalPrice,
+        appointment: this.appointmentDetails.type == 3 ? true: false,
+        description: 'Invoice',
+        serviceId: this.appointmentDetails.type,
       }
 
-      this.resetAppointmentData()
 
-      console.log(data)
-      this.closeCreateNewAppointment(true)
+      if (this.appointmentDetails.type != 3) {
+        record.details = this.descriptionInvoiceItems.map(item => {
+          const tempData = {...item}
+          delete tempData.id
+          return tempData
+        })
+      } else {
+        const invoiceItem = {
+          item:  'Doctor\'s Fee',
+          price: (this.doctorFees || 0)
+        }
+        record.details = new Array(invoiceItem)
+      }
+
+      const data = {
+        record
+      }
+
+      this.storeNewAppointmentRecord(data)
+        .then(resp => {
+          this.selectedPetDetails.history.unshift({ ...resp.data })
+          this.resetAppointmentData()
+          this.closeCreateNewAppointment(false)
+        })
+        .catch(err => {
+          console.log(err)
+        })
     },
 
     confirmCreateUser () {
-      this.user.id = new Date().toTimeString()
-      this.users.unshift({ ...this.user })
-      this.toggleAddNewUser(false)
+      const data = {
+        id: this.user.id,
+        user: {...this.user}
+      }
 
-      this.activeUserId = this.user.id
-      // this.toggleCreateNewAppointment(true)
+      delete data.user.id
 
-      this.resetUserData()
-    },
+      this.storePatientUser(data)
+        .then(resp => {
+          this.users.unshift({ ...resp.data})
 
-    confirmCreateUserPet () {
-      this.pet.id = new Date().toTimeString()
-      this.pets.push({ ...this.pet })
+          this.toggleAddNewUser(false)
 
-      this.cancelCreateUserPet()
+          this.activeUserId = this.user.id
+          // this.toggleCreateNewAppointment(true)
+
+          this.resetUserData()
+        })
+        .catch(err => {
+          console.log(err)
+        })
     },
 
     toggleCreatePetRecordModal (status) {
@@ -467,7 +450,7 @@ export default {
       this.user.emiratesId = ''
       this.user.name = ''
       this.user.email = ''
-      this.user.phone = ''
+      this.user.contact = ''
     },
 
     resetAppointmentData () {
@@ -481,13 +464,22 @@ export default {
       ]
     },
 
-    resetUserPetData () {
-      this.pet.id = ''
-      this.pet.name = ''
-      this.pet.dob = ''
-      this.pet.age = ''
-      this.pet.type = ''
-    }
+    ...mapActions([
+      'searchPatientUser',
+      'storePatientUser',
+      'getAllPatientUsers',
+      'storeNewAppointmentRecord',
+      'loadUserHistory'
+    ])
+  },
+  mounted () {
+    this.getAllPatientUsers()
+      .then(resp => {
+        this.users = resp.data.rows
+      })
+      .catch(err => {
+        console.log(err)
+      })
   }
 }
 </script>

@@ -6,7 +6,7 @@
         <router-link class="px-3 py-2 bg-indigo-500 text-white rounded cursor-pointer" to="/users/add">Add New User</router-link>
       </div>
       <div>
-        <div>
+        <div class="overflow-auto">
           <table class="min-w-full table-auto">
             <thead class="justify-between">
               <tr class="bg-gray-800">
@@ -14,55 +14,37 @@
                   <span class="text-gray-300">Name</span>
                 </th>
                 <th class="px-16 py-2">
-                  <span class="text-gray-300">Invitation</span>
+                  <span class="text-gray-300">Username</span>
                 </th>
                 <th class="px-16 py-2">
-                  <span class="text-gray-300">Date</span>
+                  <span class="text-gray-300">Email</span>
                 </th>
-
                 <th class="px-16 py-2">
-                  <span class="text-gray-300">Time</span>
+                  <span class="text-gray-300">Phone</span>
                 </th>
-
                 <th class="px-16 py-2">
                   <span class="text-gray-300">Status</span>
                 </th>
               </tr>
             </thead>
             <tbody class="bg-gray-200">
-              <tr class="bg-white border-4 border-gray-200">
-                <td>
-                  <span class="text-center ml-2 font-semibold">Dean Lynch</span>
+              <tr v-for="u in users" :key="u.id" class="bg-white border-4 border-gray-200">
+                <td class="px-16 py-2">
+                  <span class="text-center ml-2 font-semibold">{{ u.name }}</span>
                 </td>
                 <td class="px-16 py-2">
-                  <button
-                    class="bg-indigo-500 text-white px-4 py-2 border rounded-md hover:bg-white hover:border-indigo-500 hover:text-black"
-                  >
-                    Open Link
-                  </button>
+                  <span>{{ u.username }}</span>
                 </td>
                 <td class="px-16 py-2">
-                  <span>05/06/2020</span>
+                  <span>{{ u.email }}</span>
                 </td>
                 <td class="px-16 py-2">
-                  <span>10:00</span>
+                  <span>{{ u.contact }}</span>
                 </td>
 
                 <td class="px-16 py-2">
-                  <span class="text-green-500">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="w-5 h5"
-                      viewBox="0 0 24 24"
-                      stroke-width="1.5"
-                      stroke="#2c3e50"
-                      fill="none"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path stroke="none" d="M0 0h24v24H0z" />
-                      <path d="M5 12l5 5l10 -10" />
-                    </svg>
+                  <span :class="u.active ? 'text-green-500' : 'text-red-500'">
+                    {{ u.active ? 'Active' : 'Inactive' }}
                   </span>
                 </td>
               </tr>
@@ -80,7 +62,9 @@ import DashboardLayout from "../../layouts/DashbordLayout.vue";
 export default {
   name: "Users",
   data() {
-    return {};
+    return {
+      users: []
+    }
   },
   components: {
     DashboardLayout,
@@ -94,6 +78,7 @@ export default {
     this.getUsers()
       .then(resp => {
         console.log(resp)
+        this.users = resp.data.rows || []
       })
       .catch(err => {
         console.log(err)

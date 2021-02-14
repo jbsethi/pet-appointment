@@ -21,6 +21,36 @@ class UserService {
       throw new ErrorWrapper(error)
     }
   }
+
+  static async storePatientUser ({ user, id = null }) {
+    try {
+      const response = await by(`/patients`, user, id)
+
+      return new ResponseWrapper(response, response.data)
+    } catch (error) {
+      throw new ErrorWrapper(error)
+    }
+  }
+
+  static async getAllPatientUsers () {
+    try {
+      const response = await get(`/patients`)
+
+      return new ResponseWrapper(response, response.data)
+    } catch (error) {
+      throw new ErrorWrapper(error)
+    }
+  }
+
+  static async searchPatientUsers ({ query }) {
+    try {
+      const response = await get(`/patients?search=${query}`)
+
+      return new ResponseWrapper(response, response.data)
+    } catch (error) {
+      throw new ErrorWrapper(error)
+    }
+  }
 }
 
 export default UserService
