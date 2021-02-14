@@ -42,6 +42,20 @@ class UserService {
     }
   }
 
+  static async getAllTodayAppointments () {
+    try {
+      const appointment = 1
+      let date = new Date()
+      date = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+
+      const response = await get(`/orders?appointment=${appointment}&date=${date}`)
+
+      return new ResponseWrapper(response, response.data)
+    } catch (error) {
+      throw new ErrorWrapper(error)
+    }
+  }
+
   static async searchPatientUsers ({ query }) {
     try {
       const response = await get(`/patients?search=${query}`)

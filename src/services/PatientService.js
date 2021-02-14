@@ -32,6 +32,26 @@ class PatientService {
     }
   }
 
+  static async addPetTreatmentHistory ({ data, id = null }) {
+    try {
+      const response = await by(`/treatments`, data, id)
+
+      return new ResponseWrapper(response, response.data)
+    } catch (error) {
+      throw new ErrorWrapper(error)
+    }
+  }
+
+  static async loadPetDoctorHistory (query) {
+    try {
+      const response = await by(`/treatments/all/pets`, query)
+
+      return new ResponseWrapper(response, response.data)
+    } catch (error) {
+      throw new ErrorWrapper(error)
+    }
+  }
+
   static async getPatientHistory ({ search }) {
     try {
       const response = await get(`/orders?search=${search}`)

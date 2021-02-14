@@ -4,13 +4,16 @@ import UserService from './services/UserService.js'
 import PatientService from './services/PatientService.js'
 
 const roleMap = {
-  1: 'Super'
+  1: 'super',
+  2: 'administrator',
+  3: 'doctor',
+  4: 'receiptionist'
 }
 
 const store = createStore({
   state:{
-    currentUser: {},
-    currentRole: 'receiptionist'
+    currentUser: JSON.parse(localStorage.getItem('user')) || null,
+    currentRole: localStorage.getItem('role') || null
   },
 
   mutations: {
@@ -31,6 +34,23 @@ const store = createStore({
           resolve(result)
         } catch (error) {
           reject(error)
+        }
+      })
+    },
+
+    async logout ({ commit }) {
+      return new Promise(async (resolve, reject) => {
+        try {
+          AuthService.removeAccessToken()
+          AuthService.removeUser()
+          AuthService.removeRole()
+
+          commit('set', ['currentUser', {}])
+          commit('set', ['currentRole', ''])
+
+          resolve(true)
+        } catch (_) {
+          reject(false)
         }
       })
     },
@@ -71,10 +91,23 @@ const store = createStore({
       })
     },
 
-    getAllPatientUsers(_) {
+    getAllPatientUsers({ state }) {
       return new Promise(async (resolve, reject) => {
         try {
-          const result = await UserService.getAllPatientUsers()
+          const role = state.currentRole
+          console.log(role)
+          let result
+          if (role == 'doctor') {
+            result = await UserService.getAllTodayAppointments()
+
+            result.data.rows = result.data.rows.map(row => {
+              return { ...row.Patient, orderId: row.id }
+            })
+
+
+          } else {
+            result = await UserService.getAllPatientUsers()
+          }
 
           resolve(result)
         } catch (error) {
@@ -123,6 +156,30 @@ const store = createStore({
       return new Promise(async (resolve, reject) => {
         try {
           const result = await PatientService.createPatientPet(payload)
+
+          resolve(result)
+        } catch (error) {
+          reject(error)
+        }
+      })
+    },
+
+    addPetTreatmentHistory (_, payload) {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const result = await PatientService.addPetTreatmentHistory(payload)
+
+          resolve(result)
+        } catch (error) {
+          reject(error)
+        }
+      })
+    },
+
+    loadPetDoctorHistory (_, payload) {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const result = await PatientService.loadPetDoctorHistory(payload)
 
           resolve(result)
         } catch (error) {

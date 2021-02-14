@@ -72,6 +72,13 @@
             </div>
             <div class="mt-10">
               <button
+                v-if="isLoading"
+                class="flex justify-center bg-indigo-500 text-gray-100 p-4 w-full rounded-full tracking-wide focus:outline-none focus:shadow-outline hover:bg-indigo-600 shadow-lg"
+              >
+                <div class="animate-spin rounded-full border-2 h-4 w-4"></div>
+              </button>
+              <button
+                v-else
                 class="bg-indigo-500 text-gray-100 p-4 w-full rounded-full tracking-wide font-semibold font-display focus:outline-none focus:shadow-outline hover:bg-indigo-600 shadow-lg"
               >
                 Log In
@@ -259,6 +266,7 @@ export default {
   },
   methods: {
     loginUser () {
+      this.isLoading = true
       const data = {
         username: this.username,
         password: this.password
@@ -266,10 +274,11 @@ export default {
 
       this.login(data)
         .then(() => {
-          console.log('congratulation you are logged in')
+          this.isLoading = false
           this.$router.push('/')
         })
         .catch(error => {
+          this.isLoading = false
           console.log(error.message)
         })
     },

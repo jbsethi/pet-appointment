@@ -49,4 +49,9 @@ export default {
     display: flex;
   }
 }
+
+.modal__body {
+  max-height: 80vh;
+  overflow: auto;
+}
 </style>

@@ -5,7 +5,7 @@
       <TopBar @click:addNewUser="toggleAddNewUser()"/>
       <SearchBar @enter:searchUser="searchUser"/>
       <div
-        v-if="users.length > 0"
+        v-if="users.length > 0 && (!patientLoading && !searchLoading)"
         class="searched-users mt-5"
         :class="activeUserId ? 'flex flex-col gap-3' : 'grid grid-cols-3 gap-4'"
       >
@@ -18,6 +18,9 @@
           @click="selectActiveUser(user)"
         />
       </div>
+      <div v-else-if="patientLoading || searchLoading" class="flex justify-center items-center py-20">
+        <div class="animate-spin rounded-full border-4 h-16 w-16"></div>
+      </div>
       <div v-else class="searched-users mt-5">
         <p class="text-center mt-5 py-3 text-2xl text-gray-400"><em>No User Exist !</em></p>
       </div>
@@ -27,6 +30,8 @@
         :user="activeUser"
         :selectedPetId="selectedPetId"
         :selectedPetDetails="selectedPetDetails"
+        :loadingPetDoctorHistory="loadingPetDoctorHistory"
+        :loadSelectedPetDetailsHistory="loadSelectedPetDetailsHistory"
         @click:selectPet="selectPet"
         @click:addPetRecord="addPetRecord"
         @click:addVisit="addNewVisit"
@@ -79,77 +84,122 @@
           <div class="pl-1">
             <div class="mt-2">
               <label class="">
-                <input v-model="appointmentDetails.type" type="radio" name="type" id="grooming" value="2" />
+                <input v-model="appointmentDetails.grooming" type="checkbox" name="type" id="grooming" value="2" />
                 <span class="ml-3 text-base" >Grooming</span>
               </label>
-            </div>
-            <div class="mt-1">
-              <label class="">
-                <input v-model="appointmentDetails.type" type="radio" name="type" id="shopping" value="1" />
-                <span class="ml-3 text-base" >Shopping</span>
-              </label>
-            </div>
-            <div class="mt-1">
-              <label class="">
-                <input v-model="appointmentDetails.type" type="radio" name="type" id="doctor" value="3" />
-                <span class="ml-3 text-base" >Doctor</span>
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="px-3 mt-8">
-          <div v-if="appointmentDetails.type == '3'">
-            <div class="pb-2 border-b border-black mb-5 flex justify-between items-center">
-              <p class="">Description</p>
-            </div>
-            <div class="w-full mb-3 ">
-              <label>Follow Up</label>
-              <select class="mt-2 rounded bg-white py-2 px-2 w-full border border-black focus:outline-none" v-model="doctorFollowUp" >
-                <option :value="true">Yes</option>
-                <option :value="false">No</option>
-              </select>
-            </div>
-            <div class="w-full">
-              <label>Fees</label>
-              <input class="mt-2 rounded py-1 px-2 w-full border border-black focus:outline-none" :disabled="doctorFollowUp" type="text" v-model="doctorFees" />
-            </div>
-          </div>
-          <div v-else>
-            <div class="pb-2 border-b border-black mb-5 flex justify-between items-center">
-              <p class="">Description</p>
-              <div>
-                <button @click="addDescriptionInvoiceItem" type="button" class="px-2 py-1 bg-indigo-500 text-white rounded text-sm">&#10010; Add Row</button>
+
+              <div class="px-3 mt-8">
+                <div v-if="appointmentDetails.grooming">
+                  <div class="pb-2 border-b border-black mb-5 flex justify-between items-center">
+                    <p class="">Description</p>
+                    <div>
+                      <button @click="addGroomingInvoiceItem" type="button" class="px-2 py-1 bg-indigo-500 text-white rounded text-sm">&#10010; Add Row</button>
+                    </div>
+                  </div>
+                  <div>
+                    <ul>
+                      <li class="flex justify-between">
+                        <div class="w-7/12 p-1 font-semibold">Item</div>
+                        <div class="w-5/12 p-1 font-semibold">Price</div>
+                      </li>
+                      <li v-for="descriptionInvoiceItem in groomingInvoiceItems" :key="descriptionInvoiceItem.id" class="flex justify-between items-center">
+                        <div class="w-7/12">
+                          <input v-model="descriptionInvoiceItem.item" class="w-full border border-black border-r-0 p-1 pl-3" type="text" placeholder="Item Name"/>
+                        </div>
+                        <div class="w-4/12">
+                          <input v-model="descriptionInvoiceItem.price" class="w-full border border-black p-1 pl-3" type="price" placeholder="0.00"/>
+                        </div>
+                        <div class="w-1/12">
+                          <button @click="removeGroomingInvoiceItem(descriptionInvoiceItem.id)" type="button" v-if="groomingInvoiceItems.length != 1" class="p-1 ml-1 text-red-500 cursor-pointer">&#10005;</button>
+                        </div>
+                      </li>
+                      <li class="flex justify-between">
+                        <div class="w-7/12">
+                          <p class="flex justify-end pr-1 pt-1">
+                            Total Amount : 
+                          </p>
+                        </div>
+                        <div class="w-4/12">
+                          <input class="w-full border border-black border-t-0 p-1 pl-3" type="price" placeholder="0.00" :value="totalGroomingPrice" />
+                        </div>
+                        <div class="w-1/12"></div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
-            <div>
-              <ul>
-                <li class="flex justify-between">
-                  <div class="w-7/12 p-1 font-semibold">Item</div>
-                  <div class="w-5/12 p-1 font-semibold">Price</div>
-                </li>
-                <li v-for="descriptionInvoiceItem in descriptionInvoiceItems" :key="descriptionInvoiceItem.id" class="flex justify-between items-center">
-                  <div class="w-7/12">
-                    <input v-model="descriptionInvoiceItem.item" class="w-full border border-black border-r-0 p-1 pl-3" type="text" placeholder="Item Name"/>
+            <div class="mt-1">
+              <label class="">
+                <input v-model="appointmentDetails.shopping" type="checkbox" name="type" id="shopping" value="1" />
+                <span class="ml-3 text-base" >Shopping</span>
+              </label>
+
+              <div class="px-3 mt-8">
+                <div v-if="appointmentDetails.shopping">
+                  <div class="pb-2 border-b border-black mb-5 flex justify-between items-center">
+                    <p class="">Description</p>
+                    <div>
+                      <button @click="addDescriptionInvoiceItem" type="button" class="px-2 py-1 bg-indigo-500 text-white rounded text-sm">&#10010; Add Row</button>
+                    </div>
                   </div>
-                  <div class="w-4/12">
-                    <input v-model="descriptionInvoiceItem.price" class="w-full border border-black p-1 pl-3" type="price" placeholder="0.00"/>
+                  <div>
+                    <ul>
+                      <li class="flex justify-between">
+                        <div class="w-7/12 p-1 font-semibold">Item</div>
+                        <div class="w-5/12 p-1 font-semibold">Price</div>
+                      </li>
+                      <li v-for="descriptionInvoiceItem in descriptionInvoiceItems" :key="descriptionInvoiceItem.id" class="flex justify-between items-center">
+                        <div class="w-7/12">
+                          <input v-model="descriptionInvoiceItem.item" class="w-full border border-black border-r-0 p-1 pl-3" type="text" placeholder="Item Name"/>
+                        </div>
+                        <div class="w-4/12">
+                          <input v-model="descriptionInvoiceItem.price" class="w-full border border-black p-1 pl-3" type="price" placeholder="0.00"/>
+                        </div>
+                        <div class="w-1/12">
+                          <button @click="removeDescriptionInvoiceItem(descriptionInvoiceItem.id)" type="button" v-if="descriptionInvoiceItems.length != 1" class="p-1 ml-1 text-red-500 cursor-pointer">&#10005;</button>
+                        </div>
+                      </li>
+                      <li class="flex justify-between">
+                        <div class="w-7/12">
+                          <p class="flex justify-end pr-1 pt-1">
+                            Total Amount : 
+                          </p>
+                        </div>
+                        <div class="w-4/12">
+                          <input class="w-full border border-black border-t-0 p-1 pl-3" type="price" placeholder="0.00" :value="totalPrice" />
+                        </div>
+                        <div class="w-1/12"></div>
+                      </li>
+                    </ul>
                   </div>
-                  <div class="w-1/12">
-                    <button @click="removeDescriptionInvoiceItem(descriptionInvoiceItem.id)" type="button" v-if="descriptionInvoiceItems.length != 1" class="p-1 ml-1 text-red-500 cursor-pointer">&#10005;</button>
+                </div>
+              </div>
+            </div>
+            <div class="mt-1">
+              <label class="">
+                <input v-model="appointmentDetails.doctor" type="checkbox" name="type" id="doctor" value="3" />
+                <span class="ml-3 text-base" >Doctor</span>
+              </label>
+
+              <div class="px-3 mt-8">
+                <div v-if="appointmentDetails.doctor">
+                  <div class="pb-2 border-b border-black mb-5 flex justify-between items-center">
+                    <p class="">Description</p>
                   </div>
-                </li>
-                <li class="flex justify-between">
-                  <div class="w-7/12">
-                    <p class="flex justify-end pr-1 pt-1">
-                      Total Amount : 
-                    </p>
+                  <div class="w-full mb-3 ">
+                    <label>Follow Up</label>
+                    <select class="mt-2 rounded bg-white py-2 px-2 w-full border border-black focus:outline-none" v-model="doctorFollowUp" >
+                      <option :value="true">Yes</option>
+                      <option :value="false">No</option>
+                    </select>
                   </div>
-                  <div class="w-4/12">
-                    <input class="w-full border border-black border-t-0 p-1 pl-3" type="price" placeholder="0.00" :value="totalPrice" />
+                  <div class="w-full">
+                    <label>Fees</label>
+                    <input class="mt-2 rounded py-1 px-2 w-full border border-black focus:outline-none" :disabled="doctorFollowUp" type="text" v-model="doctorFees" />
                   </div>
-                  <div class="w-1/12"></div>
-                </li>
-              </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -174,12 +224,17 @@
           <input v-model="petRecord.statement" class="w-full border border-black rounded py-2 px-3 mt-1 text-grey-700 text-base focus:outline-none focus:border-indigo-900" type="text" placeholder="Statement" />
         </div>
         <div class="mt-3">
-          <label class="text-sm font-semibold">Treatment</label>
-          <input v-model="petRecord.treatment" class="w-full border border-black rounded py-2 px-3 mt-1 text-grey-700 text-base focus:outline-none focus:border-indigo-900" type="text" placeholder="Treatment" />
+          <label class="text-sm font-semibold">Prescription</label>
+          <input v-model="petRecord.prescription" class="w-full border border-black rounded py-2 px-3 mt-1 text-grey-700 text-base focus:outline-none focus:border-indigo-900" type="text" placeholder="Prescription" />
         </div>
         <div class="mt-3">
           <label class="text-sm font-semibold">Description</label>
-          <input v-model="petRecord.description" class="w-full border border-black rounded py-2 px-3 mt-1 text-grey-700 text-base focus:outline-none focus:border-indigo-900" type="text" placeholder="Description" />
+          <input
+            v-model="petRecord.description"
+            class="w-full border border-black rounded py-2 px-3 mt-1 text-grey-700 text-base focus:outline-none focus:border-indigo-900"
+            type="text"
+            placeholder="Description"
+          />
         </div>
         <div class="mt-12 flex justify-between">
           <div>
@@ -197,7 +252,7 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapActions, mapState } from 'vuex'
 
 import DashboardLayout from '../../layouts/DashbordLayout.vue'
 import Modal from '../../components/Modal.vue'
@@ -210,6 +265,11 @@ export default {
   name: 'Home',
   data () {
     return {
+      patientLoading: true,
+      searchLoading: false,
+      loadingPetDoctorHistory: false,
+      loadSelectedPetDetailsHistory: false,
+
       addNewUserForm: false,
       user: {
         id: '',
@@ -221,6 +281,13 @@ export default {
 
       createAppointmentModal: false,
       createAppointmentUserId: '',
+      groomingInvoiceItems: [
+        {
+          id: new Date().toTimeString(),
+          item: '',
+          price: ''
+        }
+      ],
       descriptionInvoiceItems: [
         {
           id: new Date().toTimeString(),
@@ -233,12 +300,15 @@ export default {
       doctorFees: null,
 
       appointmentDetails: {
-        type: 3
+        grooming: false,
+        shopping: false,
+        doctor: false
       },
 
       users: [],
 
       activeUserId: null,
+      activeOrderId: null,
       activeUser: {},
 
       selectedPetId: null,
@@ -258,19 +328,27 @@ export default {
       petRecord: {
         id: '',
         statement: '',
-        treatment: '',
-        description: '',
-        date: '23-1-2021'
+        prescription: '',
+        description: ''
       }
     }
   },
   computed: {
+    totalGroomingPrice () {
+      return this.groomingInvoiceItems.reduce((acc, item) => {
+        acc += +item.price
+        return acc
+      }, 0)
+    },
     totalPrice () {
       return this.descriptionInvoiceItems.reduce((acc, item) => {
         acc += +item.price
         return acc
       }, 0)
-    }
+    },
+    ...mapState({
+      isDoctor: state => state.currentRole == 'doctor'
+    })
   },
   components: {
     DashboardLayout,
@@ -285,12 +363,14 @@ export default {
       const data = {
         query
       }
-
+      this.searchLoading = true
       this.searchPatientUser(data)
         .then(resp => {
+          this.searchLoading = false
           this.users = resp.data.rows
         })
         .catch(err => {
+          this.searchLoading = false
           console.log(err)
         })
     },
@@ -302,23 +382,46 @@ export default {
 
     selectPet (petId) {
       this.selectedPetId = petId
+
+      if (this.isDoctor) {
+        this.loadingPetDoctorHistory = true
+        const query = {
+          petId: this.selectedPetId
+        }
+
+        this.loadPetDoctorHistory(query)
+          .then(resp => {
+            this.selectedPetDetails.history = resp.data.rows
+            this.loadingPetDoctorHistory = false
+          })
+          .catch(err => {
+            console.log(err)
+            this.loadingPetDoctorHistory = false
+          })
+      }
     },
 
     selectActiveUser (user) {
       this.activeUserId = user.id
+      this.activeOrderId = user.orderId || null
       this.activeUser = user
 
-      const query = {
-        search: user.emiratesId
-      }
+      if (!this.isDoctor) {
+        this.loadSelectedPetDetailsHistory = true
+        const query = {
+          search: user.emiratesId
+        }
 
-      this.loadUserHistory(query)
-        .then(resp => {
-          this.selectedPetDetails.history = resp.data.rows
-        })
-        .catch(err => {
-          console.log(err)
-        })
+        this.loadUserHistory(query)
+          .then(resp => {
+            this.selectedPetDetails.history = resp.data.rows
+            this.loadSelectedPetDetailsHistory = false
+          })
+          .catch(err => {
+            console.log(err)
+            this.loadSelectedPetDetailsHistory = false
+          })
+      }
     },
 
     toggleAddNewUser (status) {
@@ -338,6 +441,18 @@ export default {
       this.createAppointmentUserId = ''
     },
 
+    addGroomingInvoiceItem () {
+      this.groomingInvoiceItems.push({
+        id: new Date().toTimeString(),
+        item: '',
+        price: ''
+      })
+    },
+
+    removeGroomingInvoiceItem (id) {
+      this.groomingInvoiceItems = this.groomingInvoiceItems.filter(item => item.id !== id)
+    },
+
     addDescriptionInvoiceItem () {
       this.descriptionInvoiceItems.push({
         id: new Date().toTimeString(),
@@ -353,30 +468,46 @@ export default {
     addAppointmentRecord () {
       const record = {
         patientId: this.createAppointmentUserId,
-        price: this.appointmentDetails.type == 3 ? (this.doctorFees != null ? (this.doctorFollowUp ? 0 : this.doctorFees) : 0) : this.totalPrice,
-        appointment: this.appointmentDetails.type == 3 ? true: false,
+        appointment: this.appointmentDetails.doctor,
         description: 'Invoice',
-        serviceId: this.appointmentDetails.type,
+        details: []
       }
 
-
-      if (this.appointmentDetails.type != 3) {
-        record.details = this.descriptionInvoiceItems.map(item => {
-          const tempData = {...item}
+      if (this.appointmentDetails.grooming) {
+        const data = this.groomingInvoiceItems.map(item => {
+          const tempData = {...item, serviceId: 2}
           delete tempData.id
           return tempData
         })
-      } else {
+
+        record.details = record.details.concat(data)
+      }
+
+      if (this.appointmentDetails.shopping) {
+        const data = this.descriptionInvoiceItems.map(item => {
+          const tempData = {...item, serviceId: 1}
+          delete tempData.id
+          return tempData
+        })
+
+        record.details = record.details.concat(data)
+      }
+
+      if (this.appointmentDetails.doctor) {
         const invoiceItem = {
           item:  'Doctor\'s Fee',
-          price: (this.doctorFees || 0)
+          price: (this.doctorFees || 0),
+          serviceId: 3
         }
-        record.details = new Array(invoiceItem)
+
+        record.details.push(invoiceItem)
       }
 
       const data = {
         record
       }
+
+      console.log(data)
 
       this.storeNewAppointmentRecord(data)
         .then(resp => {
@@ -423,8 +554,21 @@ export default {
     },
 
     confirmCreatePetRecord () {
-      this.selectedPetDetails.history.unshift({ ...this.petRecord })
-      this.cancelCreatePetRecord(false)
+      const record = {
+        data: { ...this.petRecord, petId: this.selectedPetId, orderId: this.activeOrderId }
+      }
+
+      delete record.data.id
+
+      this.addPetTreatmentHistory(record)
+        .then((resp) => {
+          console.log(resp.data)
+          this.selectedPetDetails.history.unshift({ ...this.petRecord })
+          this.cancelCreatePetRecord(false)
+        })
+        .catch(err => {
+          console.log(err)
+        })
     },
 
     addPetRecord (petId) {
@@ -454,7 +598,17 @@ export default {
     },
 
     resetAppointmentData () {
-      this.appointmentDetails.type = 'doctor'
+      this.appointmentDetails.doctor = false
+      this.appointmentDetails.grooming = false
+      this.appointmentDetails.shopping = false
+
+      this.groomingInvoiceItems = [
+        {
+          id: new Date().toTimeString(),
+          item: '',
+          price: ''
+        }
+      ]
       this.descriptionInvoiceItems = [
         {
           id: new Date().toTimeString(),
@@ -469,16 +623,20 @@ export default {
       'storePatientUser',
       'getAllPatientUsers',
       'storeNewAppointmentRecord',
-      'loadUserHistory'
+      'loadUserHistory',
+      'addPetTreatmentHistory',
+      'loadPetDoctorHistory'
     ])
   },
   mounted () {
+    this.patientLoading = true
     this.getAllPatientUsers()
       .then(resp => {
         this.users = resp.data.rows
+        this.patientLoading = false
       })
       .catch(err => {
-        console.log(err)
+        this.patientLoading = false
       })
   }
 }
@@ -492,5 +650,12 @@ export default {
   .user-fit-content {
     height: fit-content;
   }
+}
+</style>
+
+<style>
+.animate-spin {
+  border-color: #aaa;
+  border-top-color: #333;
 }
 </style>

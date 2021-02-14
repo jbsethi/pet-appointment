@@ -1,7 +1,7 @@
 <template>
   <section class="border border-black">
     <div class="flex items-start justify-between p-3 bg-indigo-50">
-      <p class="text-xl font-medium">User logs</p>
+      <p class="text-xl font-medium">Visitor's History</p>
       <button
         @click="$emit('click:addVisit')"
         class="h-9 px-3 bg-indigo-600 text-white rounded flex items-center justify-center leading-none"
@@ -10,7 +10,7 @@
       </button>
     </div>
     <section
-      v-if="selectedPetDetails.history.length > 0"
+      v-if="selectedPetDetails.history.length > 0 && !loadSelectedPetDetailsHistory"
       class="p-3 flex flex-col gap-y-2 history-container"
     >
       <OrderItem
@@ -20,6 +20,9 @@
         class="w-full border border-indigo-100 bg-indigo-100 rounded p-2"
       ></OrderItem>
     </section>
+    <div v-else-if="loadSelectedPetDetailsHistory" class="flex justify-center items-center py-8">
+      <div class="animate-spin rounded-full border-4 h-16 w-16"></div>
+    </div>
     <section v-else>
       <p class="py-5 text-center text-gray-400">
         <em>No History Found !</em>
@@ -33,6 +36,10 @@ import OrderItem from './OrderItem.vue'
 export default {
   name: "PetUserHistory",
   props: {
+    loadSelectedPetDetailsHistory: {
+      type: Boolean,
+      default: false
+    },
     selectedPetDetails: {
       type: Object,
       default: () => {}

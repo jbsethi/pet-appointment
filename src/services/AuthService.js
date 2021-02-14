@@ -2,6 +2,13 @@ import axios from 'axios'
 import { API_URL } from '../.env.js'
 import { ErrorWrapper, ResponseWrapper } from './utils.js'
 
+const roleMap = {
+  1: 'super',
+  2: 'administrator',
+  3: 'doctor',
+  4: 'receiptionist'
+}
+
 class AuthService {
   static async login ({ username, password }) {
     try {
@@ -18,6 +25,9 @@ class AuthService {
 
         console.log(responseData)
 
+        localStorage.setItem('user', JSON.stringify(responseData))
+        localStorage.setItem('role', roleMap[responseData.role.id])
+
       return new ResponseWrapper(response, responseData)
     } catch (error) {
       throw new ErrorWrapper(error)
@@ -26,6 +36,16 @@ class AuthService {
 
   static setAccessToken (token) {
     localStorage.setItem('accessToken', token)
+  }
+
+  static removeAccessToken () {
+    localStorage.removeItem('accessToken')
+  }
+  static removeUser () {
+    localStorage.removeItem('user')
+  }
+  static removeRole () {
+    localStorage.removeItem('role')
   }
 }
 

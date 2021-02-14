@@ -3,7 +3,7 @@
     <div class="bg-gray-200 min-h-screen rounded px-12 pt-10 flex flex-col">
       <div class="my-5 flex justify-between border-b border-black pb-3">
         <h2 class="text-2xl">Users</h2>
-        <router-link class="px-3 py-2 bg-indigo-500 text-white rounded cursor-pointer" to="/users/add">Add New User</router-link>
+        <router-link v-if="isAdministrator" class="px-3 py-2 bg-indigo-500 text-white rounded cursor-pointer" to="/users/add">Add New User</router-link>
       </div>
       <div>
         <div class="overflow-auto">
@@ -27,7 +27,16 @@
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-gray-200">
+            <tbody v-if="usersLoading" class="bg-gray-200">
+              <tr class="bg-white border-4 border-gray-200">
+                <td colspan="5">
+                  <div class="flex justify-center items-center py-20">
+                    <div class="animate-spin rounded-full border-4 h-16 w-16"></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+            <tbody v-else class="bg-gray-200">
               <tr v-for="u in users" :key="u.id" class="bg-white border-4 border-gray-200">
                 <td class="px-16 py-2">
                   <span class="text-center ml-2 font-semibold">{{ u.name }}</span>
@@ -57,14 +66,20 @@
 </template>
 
 <script>
-import { mapActions } from 'vuex'
+import { mapActions, mapState } from 'vuex'
 import DashboardLayout from "../../layouts/DashbordLayout.vue";
 export default {
   name: "Users",
   data() {
     return {
+      usersLoading: true,
       users: []
     }
+  },
+  computed: {
+    ...mapState({
+      isAdministrator: state => (state.currentRole == 'super' || state.currentRole == 'administrator' )
+    })
   },
   components: {
     DashboardLayout,
@@ -75,12 +90,14 @@ export default {
     ])
   },
   mounted () {
+    this.usersLoading = true
     this.getUsers()
       .then(resp => {
-        console.log(resp)
+        this.usersLoading = false
         this.users = resp.data.rows || []
       })
       .catch(err => {
+        this.usersLoading = false
         console.log(err)
       })
   }

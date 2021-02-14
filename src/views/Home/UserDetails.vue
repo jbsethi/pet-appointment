@@ -25,20 +25,24 @@
               <p class="text-xl font-medium ">Pets</p>
               <div v-if="!isDoctor" @click="toggleAddNewUserPet(true)" class="text-xl pt-1 cursor-pointer">&#10010;</div>
             </div>
-            <ul v-if="pets.length > 0">
+            <ul v-if="pets.length > 0 && !loadingPatientPets">
               <li @click="selectPet(pet.id)" v-for="pet in pets" :key="pet.id" class="px-3 py-2 cursor-pointer hover:bg-indigo-100 hover:text-indigo-900">
                 <p class="text-base leading-normal">{{ pet.name }}</p>
               </li>
             </ul>
+            <div v-else-if="loadingPatientPets" class="flex justify-center items-center py-8">
+              <div class="animate-spin rounded-full border-2 h-6 w-6"></div>
+            </div>
             <p v-else class="text-gray-400 pl-3">
               <em>No Pets !</em>
             </p>
           </section>
         </div>
         <div class="w-3/4 px-2">
-          <PetDoctorHistory v-if="isDoctor" :selectedPetId="selectedPetId" :selectedPetDetails="selectedPetDetails" @click:addPetRecord="$emit('click:addPetRecord', $event)"/>
+          <PetDoctorHistory v-if="isDoctor" :loadingPetDoctorHistory="loadingPetDoctorHistory" :selectedPetId="selectedPetId" :selectedPetDetails="selectedPetDetails" @click:addPetRecord="$emit('click:addPetRecord', $event)"/>
           <PetUserHistory
             v-else
+            :loadSelectedPetDetailsHistory="loadSelectedPetDetailsHistory"
             :selectedPetDetails="selectedPetDetails"
             @click:addVisit="$emit('click:addVisit')" />
         </div>
@@ -87,6 +91,14 @@ import PetUserHistory from './PetUserHistory.vue'
 export default {
   name: 'UserDetails',
   props: {
+    loadingPetDoctorHistory: {
+      type: Boolean,
+      default: false
+    },
+    loadSelectedPetDetailsHistory: {
+      type: Boolean,
+      default: false
+    },
     user: {
       type: Object,
       default: () => {}
@@ -100,6 +112,7 @@ export default {
   },
   data () {
     return {
+      loadingPatientPets: false,
       pets: [],
 
       createPetUserModal: false,
@@ -147,7 +160,7 @@ export default {
 
     resetUserPetData () {
       this.pet.name = ''
-      this.pet.dob = ''
+      this.pet.color = ''
       this.pet.age = ''
       this.pet.pet = ''
     },
@@ -169,10 +182,11 @@ export default {
     })
   },
   watch: {
-    user: {
+    'user.id': {
       immediate: true,
       deep: true,
       handler () {
+        this.loadingPatientPets = true
         const data = {
           patientId: this.user.id
         }
@@ -180,9 +194,11 @@ export default {
         this.loadPatientPets(data)
           .then(resp => {
             this.pets = resp.data.rows
+            this.loadingPatientPets = false
           })
           .catch(err => {
             console.log(err)
+            this.loadingPatientPets = false
           })
       }
     }

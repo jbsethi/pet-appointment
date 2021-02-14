@@ -2,9 +2,9 @@
   <article
     class="w-full border border-indigo-100 bg-indigo-100 rounded p-2"
   >
-    <p class="text-sm">Visit type: {{ getServiceName(history.serviceId) }}</p>
+    <p class="text-sm">Description: {{ history.description }}</p>
     <p class="text-sm">Price: {{ history.price }}</p>
-    <small class="text-xs">{{ history.createdAt }}</small>
+    <small class="text-xs">{{ getFormatedDate(history.createdAt) }}</small>
   </article>
 </template>
 
@@ -23,6 +23,10 @@ export default {
   methods: {
     getServiceName (id) {
       return serviceMap[id]
+    },
+    getFormatedDate (date) {
+      const temp = new Date(date)
+      return `${temp.getDate()}/${temp.getMonth() + 1}/${temp.getFullYear()}`
     }
   }
 }
