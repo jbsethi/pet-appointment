@@ -2,6 +2,7 @@ import { createStore } from "vuex"
 import AuthService from './services/AuthService.js'
 import UserService from './services/UserService.js'
 import PatientService from './services/PatientService.js'
+import OrderService from './services/OrderService.js'
 
 const roleMap = {
   1: 'super',
@@ -199,7 +200,19 @@ const store = createStore({
         }
       })
     },
-  }
+
+    getOrders (_) {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const result = await OrderService.getOrders()
+
+          resolve(result)
+        } catch (error) {
+          reject(error)
+        }
+      })
+    }
+  },
 })
 
 export default store
