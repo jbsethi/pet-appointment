@@ -4,7 +4,7 @@
       <p class="text-xl font-medium">History</p>
       <button
         @click="$emit('click:addPetRecord', selectedPetId)"
-        v-if="selectedPetId"
+        v-if="selectedPetId && isDoctor"
         class="h-9 px-3 bg-indigo-600 text-white rounded flex items-center justify-center leading-none"
       >
         Add Record
@@ -42,6 +42,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 export default {
   name: "PetDoctorHistory",
   props: {
@@ -55,6 +56,11 @@ export default {
     selectedPetDetails: {
       type: Object,
     },
+  },
+  computed: {
+    ...mapState({
+      isDoctor: state => (state.currentRole == 'doctor'),
+    })
   },
 };
 </script>

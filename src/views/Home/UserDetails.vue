@@ -38,17 +38,32 @@
             </p>
           </section>
         </div>
-        <div class="w-3/4 px-2">
-          <PetDoctorHistory v-if="isDoctor" :loadingPetDoctorHistory="loadingPetDoctorHistory" :selectedPetId="selectedPetId" :selectedPetDetails="selectedPetDetails" @click:addPetRecord="$emit('click:addPetRecord', $event)"/>
+        <div v-if="isDoctor" class="w-3/4 px-2">
+          <PetDoctorHistory :loadingPetDoctorHistory="loadingPetDoctorHistory" :selectedPetId="selectedPetId" :selectedPetDetails="selectedPetDetails" @click:addPetRecord="$emit('click:addPetRecord', $event)"/>
+        </div>
+        <div v-else class="w-3/4 px-2">
+          <div class="mb-2">
+            <button
+              @click="activeTab = 1"
+              class="text-xs py-1 px-2 rounded mr-2 border"
+              :class="activeTab == 1 ? 'bg-indigo-500 text-white' : 'border-gray-500 text-gray-900 bg-white '"
+            >Visit history</button>
+            <button
+              @click="activeTab = 2"
+              class="text-xs py-1 px-2 rounded mr-2 border"
+              :class="activeTab == 2 ? 'bg-indigo-500 text-white' : 'border-gray-500 text-gray-900 bg-white'"
+            >Pet Doctor history</button>
+          </div>
+          <PetDoctorHistory v-if="activeTab == 2" :loadingPetDoctorHistory="loadingPetDoctorHistory" :selectedPetId="selectedPetId" :selectedPetDetails="selectedPetDetails" @click:addPetRecord="$emit('click:addPetRecord', $event)"/>
           <PetUserHistory
-            v-else
+            v-if="activeTab == 1"
             :loadSelectedPetDetailsHistory="loadSelectedPetDetailsHistory"
             :selectedPetDetails="selectedPetDetails"
             @click:addVisit="$emit('click:addVisit')" />
         </div>
       </section>
     </div>
-    <Modal :show="createPetUserModal" >
+    <Modal :show="createPetUserModal || createNewUserPet" >
      <div slot="header" class="px-5 py-3 border-b border-black">
         <p class="text-xl">Add pet for user</p>
       </div>
@@ -91,6 +106,10 @@ import PetUserHistory from './PetUserHistory.vue'
 export default {
   name: 'UserDetails',
   props: {
+    createNewUserPet: {
+      type: Boolean,
+      default: false
+    },
     loadingPetDoctorHistory: {
       type: Boolean,
       default: false
@@ -114,6 +133,7 @@ export default {
     return {
       loadingPatientPets: false,
       pets: [],
+      activeTab: 1,
 
       createPetUserModal: false,
       pet: {
@@ -126,9 +146,7 @@ export default {
   },
   methods: {
     selectPet (petId) {
-      if (this.isDoctor) {
-        this.$emit('click:selectPet', petId)
-      }
+      this.$emit('click:selectPet', petId)
     },
 
     toggleAddNewUserPet (status) {
@@ -144,9 +162,12 @@ export default {
 
       this.createPatientPet(data)
         .then(resp => {
-          console.log(resp)
           this.pets.push({ ...resp.data })
           this.cancelCreateUserPet()
+
+          if (this.createNewUserPet) {
+            this.$emit('handle:createNewUserPet', 'confirm')
+          }
         })
         .catch(err => {
           console.log(err)
@@ -156,6 +177,10 @@ export default {
     cancelCreateUserPet () {
       this.toggleAddNewUserPet(false)
       this.resetUserPetData()
+
+      if (this.createNewUserPet) {
+        this.$emit('handle:createNewUserPet', 'close')
+      }
     },
 
     resetUserPetData () {

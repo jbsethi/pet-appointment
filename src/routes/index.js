@@ -5,6 +5,7 @@ import Home from '../views/Home/index.vue'
 import User from '../views/Users/index.vue'
 import AddUser from '../views/Users/AddUser.vue'
 import Order from '../views/Orders/index.vue'
+import Invoice from '../views/Invoice/index.vue'
 import Login from '../views/Auth/Login.vue'
 
 const routes = [
@@ -28,6 +29,11 @@ const routes = [
     path: '/orders',
     name: 'Orders',
     component: Order
+  },
+  {
+    path: '/invoices/:id',
+    name: 'Invoice',
+    component: Invoice
   },
   {
     path: '/login',

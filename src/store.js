@@ -211,7 +211,19 @@ const store = createStore({
           reject(error)
         }
       })
-    }
+    },
+
+    loadInvoiceDetails (_, payload) {
+      return new Promise(async (resolve, reject) => {
+        try {
+          const result = await OrderService.getOrder(payload)
+
+          resolve(result)
+        } catch (error) {
+          reject(error)
+        }
+      })
+    },
   },
 })
 

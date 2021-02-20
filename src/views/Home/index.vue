@@ -32,10 +32,12 @@
         :selectedPetDetails="selectedPetDetails"
         :loadingPetDoctorHistory="loadingPetDoctorHistory"
         :loadSelectedPetDetailsHistory="loadSelectedPetDetailsHistory"
+        :createNewUserPet="createNewUserPet"
         @click:selectPet="selectPet"
         @click:addPetRecord="addPetRecord"
         @click:addVisit="addNewVisit"
         @click:close="closeUserDetails"
+        @handle:createNewUserPet="handleCreateNewUserPet"
       />
     </section>
     <Modal :show="addNewUserForm" >
@@ -61,6 +63,7 @@
         </div>
         <div class="mt-12 flex justify-between">
           <div>
+            <button v-if="loadingCreateUser" type="button" class="px-3 py-1 bg-indigo-500 text-white rounded shadow">Loading</button>
             <button @click="confirmCreateUser()" type="button" class="px-3 py-1 bg-indigo-500 text-white rounded shadow">Confirm</button>
             <button @click="resetUserData()" type="button" class="ml-1 px-5 py-1 bg-gray-500 text-white rounded shadow">Clear</button>
           </div>
@@ -265,10 +268,12 @@ export default {
   name: 'Home',
   data () {
     return {
+      createNewUserPet: false,
       patientLoading: true,
       searchLoading: false,
       loadingPetDoctorHistory: false,
       loadSelectedPetDetailsHistory: false,
+      loadingCreateUser: false,
 
       addNewUserForm: false,
       user: {
@@ -359,6 +364,20 @@ export default {
     UserDetails,
   },
   methods: {
+    handleCreateNewUserPet (status) {
+      switch (status) {
+        case 'confirm':
+          this.createNewUserPet = false
+
+          this.createAppointmentUserId = this.activeUserId
+          this.toggleCreateNewAppointment(true)
+          break
+        case 'close':
+          this.createNewUserPet = false
+          break
+      }
+    },
+
     searchUser (query) {
       const data = {
         query
@@ -521,27 +540,35 @@ export default {
     },
 
     confirmCreateUser () {
-      const data = {
-        id: this.user.id,
-        user: {...this.user}
+      if (!this.loadingCreateUser) {
+        this.loadingCreateUser = true
+        const data = {
+          id: this.user.id,
+          user: {...this.user}
+        }
+
+        delete data.user.id
+
+        this.storePatientUser(data)
+          .then(resp => {
+            this.loadingCreateUser = false
+            this.users.unshift({ ...resp.data})
+
+            this.toggleAddNewUser(false)
+
+            this.activeUserId = resp.data.id
+            // this.toggleCreateNewAppointment(true)
+
+            this.resetUserData()
+            
+            this.selectActiveUser(resp.data)
+            this.createNewUserPet = true
+          })
+          .catch(err => {
+            this.loadingCreateUser = false
+            console.log(err)
+          })
       }
-
-      delete data.user.id
-
-      this.storePatientUser(data)
-        .then(resp => {
-          this.users.unshift({ ...resp.data})
-
-          this.toggleAddNewUser(false)
-
-          this.activeUserId = this.user.id
-          // this.toggleCreateNewAppointment(true)
-
-          this.resetUserData()
-        })
-        .catch(err => {
-          console.log(err)
-        })
     },
 
     toggleCreatePetRecordModal (status) {
