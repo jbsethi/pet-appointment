@@ -38,6 +38,7 @@
         @click:addVisit="addNewVisit"
         @click:close="closeUserDetails"
         @handle:createNewUserPet="handleCreateNewUserPet"
+        @updateOrder="updateOrder"
       />
     </section>
     <Modal :show="addNewUserForm" >
@@ -107,13 +108,13 @@
                       </li>
                       <li v-for="descriptionInvoiceItem in groomingInvoiceItems" :key="descriptionInvoiceItem.id" class="flex justify-between items-center">
                         <div class="w-7/12">
-                          <input v-model="descriptionInvoiceItem.item" class="w-full border border-black border-r-0 p-1 pl-3" type="text" placeholder="Item Name"/>
+                          <input :disabled="descriptionInvoiceItem.isEdit == true" v-model="descriptionInvoiceItem.item" class="w-full border border-black border-r-0 p-1 pl-3" type="text" placeholder="Item Name"/>
                         </div>
                         <div class="w-4/12">
-                          <input v-model="descriptionInvoiceItem.price" class="w-full border border-black p-1 pl-3" type="price" placeholder="0.00"/>
+                          <input :disabled="descriptionInvoiceItem.isEdit == true" v-model="descriptionInvoiceItem.price" class="w-full border border-black p-1 pl-3" type="price" placeholder="0.00"/>
                         </div>
                         <div class="w-1/12">
-                          <button @click="removeGroomingInvoiceItem(descriptionInvoiceItem.id)" type="button" v-if="groomingInvoiceItems.length != 1" class="p-1 ml-1 text-red-500 cursor-pointer">&#10005;</button>
+                          <button @click="removeGroomingInvoiceItem(descriptionInvoiceItem.id)" type="button" v-if="descriptionInvoiceItem.isEdit != true && groomingInvoiceItems.length != 1" class="p-1 ml-1 text-red-500 cursor-pointer">&#10005;</button>
                         </div>
                       </li>
                       <li class="flex justify-between">
@@ -154,13 +155,13 @@
                       </li>
                       <li v-for="descriptionInvoiceItem in descriptionInvoiceItems" :key="descriptionInvoiceItem.id" class="flex justify-between items-center">
                         <div class="w-7/12">
-                          <input v-model="descriptionInvoiceItem.item" class="w-full border border-black border-r-0 p-1 pl-3" type="text" placeholder="Item Name"/>
+                          <input :disabled="descriptionInvoiceItem.isEdit == true" v-model="descriptionInvoiceItem.item" class="w-full border border-black border-r-0 p-1 pl-3" type="text" placeholder="Item Name"/>
                         </div>
                         <div class="w-4/12">
-                          <input v-model="descriptionInvoiceItem.price" class="w-full border border-black p-1 pl-3" type="price" placeholder="0.00"/>
+                          <input :disabled="descriptionInvoiceItem.isEdit == true" v-model="descriptionInvoiceItem.price" class="w-full border border-black p-1 pl-3" type="price" placeholder="0.00"/>
                         </div>
                         <div class="w-1/12">
-                          <button @click="removeDescriptionInvoiceItem(descriptionInvoiceItem.id)" type="button" v-if="descriptionInvoiceItems.length != 1" class="p-1 ml-1 text-red-500 cursor-pointer">&#10005;</button>
+                          <button @click="removeDescriptionInvoiceItem(descriptionInvoiceItem.id)" type="button" v-if="descriptionInvoiceItem.isEdit !== true && descriptionInvoiceItems.length != 1" class="p-1 ml-1 text-red-500 cursor-pointer">&#10005;</button>
                         </div>
                       </li>
                       <li class="flex justify-between">
@@ -192,14 +193,14 @@
                   </div>
                   <div class="w-full mb-3 ">
                     <label>Follow Up</label>
-                    <select class="mt-2 rounded bg-white py-2 px-2 w-full border border-black focus:outline-none" v-model="doctorFollowUp" >
+                    <select :disabled="editingRecordDoctor" class="mt-2 rounded bg-white py-2 px-2 w-full border border-black focus:outline-none" v-model="doctorFollowUp" >
                       <option :value="true">Yes</option>
                       <option :value="false">No</option>
                     </select>
                   </div>
                   <div class="w-full">
                     <label>Fees</label>
-                    <input class="mt-2 rounded py-1 px-2 w-full border border-black focus:outline-none" :disabled="doctorFollowUp" type="text" v-model="doctorFees" />
+                    <input class="mt-2 rounded py-1 px-2 w-full border border-black focus:outline-none" :disabled="doctorFollowUp || editingRecordDoctor" type="text" v-model="doctorFees" />
                   </div>
                 </div>
               </div>
@@ -268,6 +269,7 @@ export default {
   name: 'Home',
   data () {
     return {
+      editingRecordDoctor: false,
       createNewUserPet: false,
       patientLoading: true,
       searchLoading: false,
@@ -285,7 +287,8 @@ export default {
       },
 
       createAppointmentModal: false,
-      createAppointmentUserId: '',
+      createAppointmentUserId: ''
+      ,
       groomingInvoiceItems: [
         {
           id: new Date().toTimeString(),
@@ -364,6 +367,39 @@ export default {
     UserDetails,
   },
   methods: {
+    updateOrder (orderId) {
+      const order = this.selectedPetDetails.history.find(o => o.id == orderId)
+      console.log(order)
+
+      if (order) {
+        this.editingInvoice = true
+        this.descriptionInvoiceItems = []
+        this.groomingInvoiceItems = []
+
+        const orders = [...order.OrderBreakdowns]
+
+        orders.forEach(item => {
+          switch (item.serviceId) {
+            case 1:
+              this.appointmentDetails.shopping = true
+              this.descriptionInvoiceItems.push({ ...item, isEdit: true  })
+              break
+            case 2:
+              this.appointmentDetails.grooming = true
+              this.groomingInvoiceItems.push({ ...item, isEdit: true  })
+              break
+            case 3:
+              this.editingRecordDoctor = true
+              this.appointmentDetails.doctor = true
+              this.doctorFees = item.price
+          }
+        })
+      }
+
+
+      this.addNewVisit()
+    },
+
     handleCreateNewUserPet (status) {
       switch (status) {
         case 'confirm':
@@ -448,9 +484,7 @@ export default {
     },
 
     toggleCreateNewAppointment (status) {
-      console.log('coming here')
       if (this.createAppointmentUserId) {
-        console.log('coming in here', status)
         this.createAppointmentModal = status == undefined ? !this.createAppointmentModal : status
       }
     },
@@ -458,6 +492,26 @@ export default {
     closeCreateNewAppointment (status) {
       this.toggleCreateNewAppointment(status)
       this.createAppointmentUserId = ''
+      this.appointmentDetails.shopping = false
+      this.appointmentDetails.grooming = false
+      this.appointmentDetails.doctor = false
+      this.editingRecordDoctor = false
+
+      this.groomingInvoiceItems = [
+        {
+          id: new Date().toTimeString(),
+          item: '',
+          price: ''
+        }
+      ]
+
+      this.descriptionInvoiceItems = [
+        {
+          id: new Date().toTimeString(),
+          item: '',
+          price: ''
+        }
+      ]
     },
 
     addGroomingInvoiceItem () {
@@ -494,8 +548,7 @@ export default {
 
       if (this.appointmentDetails.grooming) {
         const data = this.groomingInvoiceItems.map(item => {
-          const tempData = {...item, serviceId: 2}
-          delete tempData.id
+          const tempData = {item: item.item, price: item.price , serviceId: 2}
           return tempData
         })
 
@@ -504,8 +557,7 @@ export default {
 
       if (this.appointmentDetails.shopping) {
         const data = this.descriptionInvoiceItems.map(item => {
-          const tempData = {...item, serviceId: 1}
-          delete tempData.id
+          const tempData = {item: item.item, price: item.price , serviceId: 1}
           return tempData
         })
 
@@ -525,8 +577,6 @@ export default {
       const data = {
         record
       }
-
-      console.log(data)
 
       this.storeNewAppointmentRecord(data)
         .then(resp => {

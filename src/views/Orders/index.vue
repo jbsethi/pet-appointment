@@ -21,9 +21,8 @@
                 <th class="px-16 py-2">
                   <span class="text-gray-300">Price</span>
                 </th>
-                <!-- <th class="px-16 py-2">
-                  <span class="text-gray-300">Status</span>
-                </th> -->
+                <th class="px-16 py-2">
+                </th>
               </tr>
             </thead>
             <tbody v-if="ordersLoading" class="bg-gray-200">
@@ -49,12 +48,11 @@
                 <td class="px-16 py-2">
                   <span>{{ o.price }}</span>
                 </td>
-
-                <!--  <td class="px-16 py-2">
-                  <span :class="u.active ? 'text-green-500' : 'text-red-500'">
-                    {{ u.active ? 'Active' : 'Inactive' }}
+                 <td class="px-16 py-2">
+                  <span @click="showInvoice(o.id)" class="text-indigo-500 cursor-pointer">
+                    Show Invoice
                   </span>
-                </td> -->
+                </td>
               </tr>
             </tbody>
           </table>
@@ -79,6 +77,9 @@ export default {
     DashboardLayout,
   },
   methods: {
+    showInvoice (orderId) {
+      window.open(`/invoices/${orderId}`, 'chart', 'width=720, height=700')
+    },
     ...mapActions([
       'getOrders'
     ])

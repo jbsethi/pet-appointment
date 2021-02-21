@@ -59,7 +59,8 @@
             v-if="activeTab == 1"
             :loadSelectedPetDetailsHistory="loadSelectedPetDetailsHistory"
             :selectedPetDetails="selectedPetDetails"
-            @click:addVisit="$emit('click:addVisit')" />
+            @click:addVisit="$emit('click:addVisit')"
+            @updateOrder="$emit('updateOrder', $event)" />
         </div>
       </section>
     </div>

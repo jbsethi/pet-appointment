@@ -18,6 +18,7 @@
         :key="history.id"
         :history="history"
         class="w-full border border-indigo-100 bg-indigo-100 rounded p-2"
+        @updateOrder="$emit('updateOrder', $event)"
       ></OrderItem>
     </section>
     <div v-else-if="loadSelectedPetDetailsHistory" class="flex justify-center items-center py-8">
