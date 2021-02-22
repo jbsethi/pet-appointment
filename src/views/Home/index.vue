@@ -7,14 +7,14 @@
       <div
         v-if="users.length > 0 && (!patientLoading && !searchLoading)"
         class="searched-users mt-5"
-        :class="activeUserId ? 'flex flex-col gap-3' : 'grid grid-cols-3 gap-4'"
+        :class="activeUserId ? 'flex flex-col gap-3' : 'gap-4'"
       >
         <SearchedUser
           class="cursor-pointer hover:bg-gray-50"
           v-for="user in users"
           :key="user.id"
           :user="user"
-          :class="activeUserId ? '' : 'user-fit-content'"
+          :class="activeUserId ? 'user-fit-content' : 'single-user'"
           @click="selectActiveUser(user)"
         />
       </div>
@@ -723,9 +723,29 @@ export default {
 .searched-users {
   height: 70vh;
   overflow: auto;
-  grid-template-rows: auto 1fr;
+  // grid-template-rows: auto 1fr;
+  display: flex;
+  align-content: flex-start;
+  justify-content: flex-start;
+  flex-wrap: wrap;
   .user-fit-content {
     height: fit-content;
+    width: 100%;
+  }
+  .single-user {
+    width: calc(33.8% - 1rem);
+  }
+
+  @media only screen and (max-width: 1200px) {
+    .single-user {
+      width: calc(50% - 1rem);
+    }
+  }
+
+  @media only screen and (max-width: 900px) {
+    .single-user {
+      width: calc(100%);
+    }
   }
 }
 </style>
